@@ -256,7 +256,7 @@ bool RobotStatusRelayHandler::aggregate(const std::map<int, StatusMsg>&in,
       out[ns].header.stamp = std::max(in_msg.header.stamp, out[ns].header.stamp);
 
       // aggregate with existing messages
-      if (out.count(ns)==0)
+      if (out.count(ns)==1)
         out[ns] = in_msg;
       else
         out[ns] = aggregate(in_msg, out[ns]);
