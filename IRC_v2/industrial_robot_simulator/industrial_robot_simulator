@@ -56,7 +56,9 @@ from industrial_msgs.srv import GetRobotInfo, GetRobotInfoResponse
 # Reference
 from industrial_msgs.msg import TriState, RobotMode, ServiceReturnCode, DeviceInfo
 
-
+# Festo Services
+from festo_copra_support.srv import *
+from festo_copra_support.msg import *
 
 
 """
@@ -463,7 +465,10 @@ class IndustrialRobotSimulatorNode():
         self.get_robot_info_response = self._init_robot_info_response()
         self.svc_get_robot_info = rospy.Service('get_robot_info', GetRobotInfo, self.cb_svc_get_robot_info)
 
-        # Clean up init
+        self.svc_festo_cmd_interface = rospy.Service('festo/robot_cmd_interface',
+                                                     festo_copra_support.srv.festo_cmd_service,
+                                                     self.cb_svc_festo_cmd_interface)
+       # Clean up init
         rospy.on_shutdown(self.shutdown)
 
     """
@@ -522,6 +527,11 @@ class IndustrialRobotSimulatorNode():
     def cb_svc_get_robot_info(self, req):
         # return cached response instance
         return self.get_robot_info_response
+
+    def cb_svc_festo_cmd_interface(self,req):
+        rospy.sleep(0.1)
+        rospy.logerr("Setting p1 to : %f and p2: %f ", req.cmd_msg.p1, req.cmd_msg.p2)
+        return festo_cmd_serviceResponse()
 
 
     """
