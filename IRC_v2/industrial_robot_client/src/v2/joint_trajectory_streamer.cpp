@@ -33,6 +33,9 @@
 
 using industrial::simple_message::SimpleMessage;
 
+namespace SpecialSeqValues = industrial::dynamic_joint_pt::SpecialSeqValues;
+
+
 namespace industrial_robot_client2
 {
 namespace joint_trajectory_streamer
@@ -113,6 +116,14 @@ bool JointTrajectoryStreamer::send_to_robot(const std::vector<DynamicJointPtMess
     this->current_point_ = 0;
     this->state_ = TransferStates::STREAMING;
     this->streaming_start_ = ros::Time::now();
+
+
+    // TODO: Using the special sequence numbers the last step could also be done on the robot
+    // TODO: Find out where the problem of the non zero acceleration originates
+    this->current_traj_.begin()->setSequence(SpecialSeqValues::START_TRAJECTORY_STREAMING);
+    this->current_traj_.back().setSequence(SpecialSeqValues::END_TRAJECTORY);
+    this->current_traj_.back().setAcceleration2Zero();
+
   }
   this->mutex_.unlock();
 
@@ -146,7 +157,7 @@ void JointTrajectoryStreamer::streamingThread()
   ROS_INFO("Starting joint trajectory streamer thread");
   while (ros::ok())
   {
-    ros::Duration(0.005).sleep();
+    ros::Duration(0.001).sleep();
 
     // automatically re-establish connection, if required
     if (connectRetryCount-- > 0)

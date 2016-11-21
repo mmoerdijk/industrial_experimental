@@ -32,6 +32,7 @@
 #ifndef DYNAMIC_JOINT_PT_MESSAGE_H
 #define DYNAMIC_JOINT_PT_MESSAGE_H
 
+
 #ifndef FLATHEADERS
 #include "simple_message/typed_message.h"
 #include "simple_message/simple_message.h"
@@ -43,6 +44,8 @@
 #include "shared_types.h"
 #include "dynamic_joint_pt.h"
 #endif
+
+
 
 namespace industrial
 {
@@ -117,6 +120,7 @@ public:
    * \param message sequence number
    */
   void setSequence(industrial::shared_types::shared_int sequence) { point_.setSequence(sequence); }
+  void setAcceleration2Zero();
 
   industrial::dynamic_joint_pt::DynamicJointPt point_;
 

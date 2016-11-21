@@ -82,6 +82,7 @@ void DynamicJointPtMessage::init(industrial::dynamic_joint_pt::DynamicJointPt & 
 {
   this->init();
   this->point_ = point;
+
 }
 
 void DynamicJointPtMessage::init()
@@ -128,6 +129,23 @@ bool DynamicJointPtMessage::unloadFront(ByteArray *buffer)
     LOG_ERROR("Failed to unload dynamic joint pt data");
   }
   return rtn;
+}
+
+void DynamicJointPtMessage::setAcceleration2Zero()
+{
+
+  for(int i = 0 ; i < point_.getNumGroups();i++)
+  {
+     std::vector<industrial::shared_types::shared_real> accelerations;
+
+     for(int y=0;y<point_.getGroup(i).getNumJoints();y++)
+     {
+       accelerations.push_back(0);
+     }
+
+
+     point_.getGroup(0).setAccelerations(accelerations);
+  }
 }
 
 }
