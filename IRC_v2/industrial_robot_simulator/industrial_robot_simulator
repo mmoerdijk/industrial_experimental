@@ -530,7 +530,7 @@ class IndustrialRobotSimulatorNode():
 
     def cb_svc_festo_cmd_interface(self,req):
         rospy.sleep(0.1)
-        rospy.logerr("Setting p1 to : %f and p2: %f ", req.cmd_msg.p1, req.cmd_msg.p2)
+        rospy.logerr("Setting p1 to : %f ,  p2: %f  and mode to: %i ", req.cmd_msg.p1, req.cmd_msg.p2, req.cmd_msg.mode)
         return festo_cmd_serviceResponse()
 
 

@@ -50,6 +50,9 @@ JointTrajectoryAction::JointTrajectoryAction() :
 
   pn.param("constraints/goal_threshold", goal_threshold_, DEFAULT_GOAL_THRESHOLD_);
 
+  ROS_ERROR_STREAM(
+      "Got goal_threshold:" << goal_threshold_ << " rad");
+
   pub_trajectory_command_ = node_.advertise<trajectory_msgs::JointTrajectory>("joint_path_command", 1);
   sub_trajectory_state_ = node_.subscribe("feedback_states", 1, &JointTrajectoryAction::controllerStateCB, this);
   sub_robot_status_ = node_.subscribe("robot_status", 1, &JointTrajectoryAction::robotStatusCB, this);
@@ -146,16 +149,16 @@ void JointTrajectoryAction::goalCB(JointTractoryActionServer::GoalHandle gh)
   // Adding some informational log messages to indicate unsupported goal constraints
   if (gh.getGoal()->goal_time_tolerance.toSec() > 0.0)
   {
-    ROS_WARN_STREAM("Ignoring goal time tolerance in action goal, may be supported in the future");
+    ROS_ERROR_STREAM("Ignoring goal time tolerance in action goal, may be supported in the future");
   }
   if (!gh.getGoal()->goal_tolerance.empty())
   {
-    ROS_WARN_STREAM(
+    ROS_ERROR_STREAM(
         "Ignoring goal tolerance in action, using paramater tolerance of " << goal_threshold_ << " instead");
   }
   if (!gh.getGoal()->path_tolerance.empty())
   {
-    ROS_WARN_STREAM("Ignoring goal path tolerance, option not supported by ROS-Industrial drivers");
+    ROS_ERROR_STREAM("Ignoring goal path tolerance, option not supported by ROS-Industrial drivers");
   }
 }
 
@@ -219,20 +222,20 @@ void JointTrajectoryAction::controllerStateCB(const control_msgs::FollowJointTra
       // the motion state (i.e. old driver), this will still work, but it warns you.
       if (last_robot_status_->in_motion.val == industrial_msgs::TriState::FALSE)
       {
-        ROS_INFO("Inside goal constraints, stopped moving, return success for action");
+        ROS_ERROR("Inside goal constraints, stopped moving, return success for action");
         active_goal_.setSucceeded();
         has_active_goal_ = false;
       }
       else if (last_robot_status_->in_motion.val == industrial_msgs::TriState::UNKNOWN)
       {
-        ROS_INFO("Inside goal constraints, return success for action");
-        ROS_WARN("Robot status in motion unknown, the robot driver node and controller code should be updated");
+        ROS_ERROR("Inside goal constraints, return success for action");
+        ROS_ERROR("Robot status in motion unknown, the robot driver node and controller code should be updated");
         active_goal_.setSucceeded();
         has_active_goal_ = false;
       }
       else
       {
-        ROS_DEBUG("Within goal constraints but robot is still moving");
+        ROS_ERROR("Within goal constraints but robot is still moving");
       }
     }
     else

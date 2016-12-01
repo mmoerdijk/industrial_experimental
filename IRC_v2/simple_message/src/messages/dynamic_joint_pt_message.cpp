@@ -134,17 +134,23 @@ bool DynamicJointPtMessage::unloadFront(ByteArray *buffer)
 void DynamicJointPtMessage::setAcceleration2Zero()
 {
 
-  for(int i = 0 ; i < point_.getNumGroups();i++)
+
+
+  int num_used_groups = 0 ;
+  for(int i = 0 ; num_used_groups < point_.getNumGroups();i++)
   {
-     std::vector<industrial::shared_types::shared_real> accelerations;
 
-     for(int y=0;y<point_.getGroup(i).getNumJoints();y++)
-     {
-       accelerations.push_back(0);
+     if(point_.hasGroupID(i)) {
+
+       //LOG_ERROR("GROUP ID: %i",i);
+       std::vector<industrial::shared_types::shared_real> accelerations;
+
+      // LOG_ERROR("NUM JOINTS: %i",point_.getGroup(num_used_groups).getNumJoints());
+       accelerations.resize(point_.getGroup(num_used_groups).getNumJoints());
+
+       point_.getGroup(num_used_groups).setAccelerations(accelerations);
+       num_used_groups++;
      }
-
-
-     point_.getGroup(0).setAccelerations(accelerations);
   }
 }
 
