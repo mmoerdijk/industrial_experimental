@@ -399,7 +399,7 @@ class IndustrialRobotSimulatorNode():
         self.lock = threading.Lock()
 
         # Publish rate (hz)
-        self.pub_rate = rospy.get_param('pub_rate', 10.0)
+        self.pub_rate = rospy.get_param('pub_rate', 50.0)
         rospy.logdebug("Setting publish rate (hz) based on parameter: %f", self.pub_rate)
 
         # Joint names
@@ -465,9 +465,23 @@ class IndustrialRobotSimulatorNode():
         self.get_robot_info_response = self._init_robot_info_response()
         self.svc_get_robot_info = rospy.Service('get_robot_info', GetRobotInfo, self.cb_svc_get_robot_info)
 
-        self.svc_festo_cmd_interface = rospy.Service('festo/robot_cmd_interface',
-                                                     festo_copra_support.srv.festo_cmd_service,
-                                                     self.cb_svc_festo_cmd_interface)
+        self.svc_festo_set_mode_service = rospy.Service('festo/robot_ctrl/set_mode',
+                                                        festo_copra_support.srv.festo_set_mode_service,
+                                                        self.cb_svc_festo_mode_service)
+
+        self.svc_festo_set_mode_service = rospy.Service('festo/robot_ctrl/set_outputs',
+                                                        festo_copra_support.srv.festo_set_outputs_service,
+                                                        self.cb_svc_festo_outputs_service)
+
+        self.svc_festo_set_mode_service = rospy.Service('festo/robot_ctrl/set_pressure',
+                                                        festo_copra_support.srv.festo_set_pressure_service,
+                                                        self.cb_svc_festo_pressure_service)
+
+        self.svc_festo_set_mode_service = rospy.Service('festo/robot_ctrl/set_stiffness',
+                                                        festo_copra_support.srv.festo_set_stiffness_service,
+                                                        self.cb_svc_festo_stiffness_service)
+
+
        # Clean up init
         rospy.on_shutdown(self.shutdown)
 
@@ -528,12 +542,38 @@ class IndustrialRobotSimulatorNode():
         # return cached response instance
         return self.get_robot_info_response
 
-    def cb_svc_festo_cmd_interface(self,req):
+    def cb_svc_festo_mode_service(self, req):
         rospy.sleep(0.1)
-        rospy.logerr("Setting p1 to : %f ,  p2: %f  and mode to: %i ", req.cmd_msg.p1, req.cmd_msg.p2, req.cmd_msg.mode)
-        return festo_cmd_serviceResponse()
+        rospy.logerr("Setting mode to : %i ", req.required_mode.mode)
+        return festo_set_mode_serviceResponse()
 
+    def cb_svc_festo_outputs_service(self, req):
+        rospy.sleep(0.1)
+        rospy.logerr("Setting outputs to:")
+        out = req.required_outputs.outputs
+        for joint_nr in range(0, 7):
+            rospy.logerr("Joint %i", joint_nr)
+            value = [False]*4
+            for output in range(0, 4):
+                bit = joint_nr*4 + output
+                if out & (1 << bit) :
+                    value[output] = True
+                else:
+                    value[output] = False
 
+            rospy.logerr("  %r %r %r %r", value[0], value[1], value[2], value[3])
+
+        return festo_set_outputs_serviceResponse()
+
+    def cb_svc_festo_pressure_service(self, req):
+        rospy.sleep(0.1)
+        rospy.logerr("Setting p1 to : %f ,  p2: %f ", req.required_pressure.p1, req.required_pressure.p2)
+        return festo_set_pressure_serviceResponse()
+
+    def cb_svc_festo_stiffness_service(self, req):
+        rospy.sleep(0.1)
+        rospy.logerr("Setting stiffness : %f ", req.required_stiffness.stiffness_factor)
+        return festo_set_stiffness_serviceResponse()
     """
     The publish worker is executed at a fixed rate.  This publishes the various
     state and status information for the robot.
