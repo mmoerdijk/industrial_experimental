@@ -61,6 +61,7 @@ from festo_copra_support.srv import *
 from festo_copra_support.msg import *
 
 
+
 """
 MotionControllerSimulator
 
@@ -399,7 +400,7 @@ class IndustrialRobotSimulatorNode():
         self.lock = threading.Lock()
 
         # Publish rate (hz)
-        self.pub_rate = rospy.get_param('pub_rate', 50.0)
+        self.pub_rate = rospy.get_param('pub_rate', 10.0)
         rospy.logdebug("Setting publish rate (hz) based on parameter: %f", self.pub_rate)
 
         # Joint names
@@ -456,6 +457,9 @@ class IndustrialRobotSimulatorNode():
                                                 robot_status_pub, \
                                                 joint_path_sub)
 
+        self.publisher_festo_status = rospy.Publisher("festo/info/festo_status",festo_status_msg, queue_size=1)
+        self.festo_status_msg = festo_copra_support.msg.festo_status_msg()
+
         # JointStates timed task (started automatically)
         period = rospy.Duration(1.0/self.pub_rate)
         rospy.logdebug('Setting up publish worker with period (sec): %s', str(period.to_sec()))
@@ -480,6 +484,9 @@ class IndustrialRobotSimulatorNode():
         self.svc_festo_set_mode_service = rospy.Service('festo/robot_ctrl/set_stiffness',
                                                         festo_copra_support.srv.festo_set_stiffness_service,
                                                         self.cb_svc_festo_stiffness_service)
+
+
+
 
 
        # Clean up init
@@ -543,11 +550,13 @@ class IndustrialRobotSimulatorNode():
         return self.get_robot_info_response
 
     def cb_svc_festo_mode_service(self, req):
+        self.festo_status_msg.mode = req.required_mode.mode
         rospy.sleep(0.1)
         rospy.logerr("Setting mode to : %i ", req.required_mode.mode)
         return festo_set_mode_serviceResponse()
 
     def cb_svc_festo_outputs_service(self, req):
+        self.festo_status_msg.outputs = req.required_outputs.outputs
         rospy.sleep(0.1)
         rospy.logerr("Setting outputs to:")
         out = req.required_outputs.outputs
@@ -567,11 +576,14 @@ class IndustrialRobotSimulatorNode():
 
     def cb_svc_festo_pressure_service(self, req):
         rospy.sleep(0.1)
+        self.festo_status_msg.p1 = req.required_pressure.p1
+        self.festo_status_msg.p2 = req.required_pressure.p2
         rospy.logerr("Setting p1 to : %f ,  p2: %f ", req.required_pressure.p1, req.required_pressure.p2)
         return festo_set_pressure_serviceResponse()
 
     def cb_svc_festo_stiffness_service(self, req):
         rospy.sleep(0.1)
+        self.festo_status_msg.stiffness_factor = req.required_stiffness.stiffness_factor
         rospy.logerr("Setting stiffness : %f ", req.required_stiffness.stiffness_factor)
         return festo_set_stiffness_serviceResponse()
     """
@@ -579,9 +591,14 @@ class IndustrialRobotSimulatorNode():
     state and status information for the robot.
     """
     def publish_worker(self, event):
+        #rospy.logerr("test worker")
+
+        self.publisher_festo_status.publish(self.festo_status_msg)
         for ns in self.joint_map.namespaces():
             self.joint_state_publisher(ns)
             self.robot_status_publisher(ns)
+
+
 
     """
     The joint state publisher publishes the current joint state and the current
